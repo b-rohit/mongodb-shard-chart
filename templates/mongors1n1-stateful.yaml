@@ -1,0 +1,62 @@
+apiVersion: {{ default "extensions/v1beta1" .Values.deploymentApiVersion }}
+kind: StatefulSet
+metadata:
+  annotations:
+  labels:
+    app: "{{ .Values.shardsvr.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: indexer-mongors1n1
+  name: indexer-mongors1n1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Values.shardsvr.name }}"
+      track: "{{ .Values.application.track }}"
+      tier: "{{ .Values.application.tier }}"
+      release: {{ .Release.Name }}
+      service: indexer-mongors1n1
+  serviceName: indexer-mongors1n1
+  template:
+    metadata:
+      annotations:
+      creationTimestamp: null
+      labels:
+        app: "{{ .Values.shardsvr.name }}"
+        track: "{{ .Values.application.track }}"
+        tier: "{{ .Values.application.tier }}"
+        release: {{ .Release.Name }}
+        service: indexer-mongors1n1
+      name: indexer-mongors1n1
+    spec:
+      volumes:
+      - name: datadir
+        emptyDir: {}
+      - name: init
+        configMap:
+          defaultMode: 0755
+          name: mongodb-configmap-init
+      containers:
+      - name: indexer-mongors1n1
+        image: {{ .Values.common.image }}
+        env:
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: datadir
+          mountPath: /data/db 
+        - name: init
+          mountPath: /init
+        command: ["/bin/bash","-c"]
+        args:
+        - source /init/on-start.sh "rs1n1";
+        env:
+        - name: KEYFILE
+          valueFrom:
+            secretKeyRef:
+              name: {{.Release.Name}}
+              key: keyfile
+      restartPolicy: Always
+      enableServiceLinks: false

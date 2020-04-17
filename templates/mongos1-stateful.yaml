@@ -1,0 +1,58 @@
+apiVersion: {{ default "extensions/v1beta1" .Values.deploymentApiVersion }}
+kind: StatefulSet
+metadata:
+  annotations:
+  labels:
+    app: "{{ .Values.mongos.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: "{{ .Values.mongos.service.name }}"
+  name: "{{ .Values.mongos.service.name }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "{{ .Values.mongos.name }}"
+      track: "{{ .Values.application.track }}"
+      tier: "{{ .Values.application.tier }}"
+      release: {{ .Release.Name }}
+      service: "{{ .Values.mongos.service.name }}"
+  serviceName: "{{ .Values.mongos.service.name }}"
+  template:
+    metadata:
+      annotations:
+      creationTimestamp: null
+      labels:
+        app: "{{ .Values.mongos.name }}"
+        track: "{{ .Values.application.track }}"
+        tier: "{{ .Values.application.tier }}"
+        release: {{ .Release.Name }}
+        service: "{{ .Values.mongos.service.name }}"
+      name: "{{ .Values.mongos.service.name }}"
+    spec:
+      volumes:
+      - name: init
+        configMap:
+          defaultMode: 0755
+          name: mongodb-configmap-init
+      containers:
+      - name: "{{ .Values.mongos.service.name }}"
+        image: {{ .Values.common.image }}
+        env:
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: init
+          mountPath: /init
+        command: ["/bin/bash","-c"]
+        args:
+        - source /init/on-start.sh "s1";
+        env:
+        - name: KEYFILE
+          valueFrom:
+            secretKeyRef:
+              name: {{.Release.Name}}
+              key: keyfile
+      restartPolicy: Always
+      enableServiceLinks: false

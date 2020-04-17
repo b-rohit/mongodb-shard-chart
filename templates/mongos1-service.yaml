@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: "{{ .Values.mongos.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: "{{ .Values.mongos.service.name }}"
+  name: "{{ .Values.mongos.service.name }}"
+spec:
+  ports:
+  - name: "{{ .Values.mongos.service.name }}"
+    port: 27017
+    targetPort: 27017
+  selector:
+    app: "{{ .Values.mongos.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: "{{ .Values.mongos.service.name }}"
+status:
+  loadBalancer: {}

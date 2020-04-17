@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: "{{ .Values.shardsvr.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: "{{ .Values.shardsvr.service.name }}"
+  name: "{{ .Values.shardsvr.service.name }}"
+spec:
+  ports:
+  - name: "{{ .Values.shardsvr.service.name }}"
+    port: 27017
+    targetPort: 27017
+  selector:
+    app: "{{ .Values.shardsvr.name }}"
+    track: "{{ .Values.application.track }}"
+    tier: "{{ .Values.application.tier }}"
+    release: {{ .Release.Name }}
+    service: "{{ .Values.shardsvr.service.name }}"
+status:
+  loadBalancer: {}
