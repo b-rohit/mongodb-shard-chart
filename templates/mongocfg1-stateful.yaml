@@ -10,7 +10,7 @@ metadata:
     service: "{{ .Values.configsvr.service.name }}"
   name: "{{ .Values.configsvr.service.name }}"
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: "{{ .Values.configsvr.name }}"
