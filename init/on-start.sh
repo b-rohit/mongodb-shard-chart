@@ -2,16 +2,16 @@
 TYPE=$1
 retry_until_conf() {
   COUNTER=0
-  res=$(eval 'mongo -u mongors1conf-admin -p qweasd --host indexer-mongocfg1:27017 --eval "rs.status().ok"')
-  response=$?
-  echo "response, $response"
-  echo "res $res" 
-  while [[ response -ne 0 ]] ; do
+  mongo -u mongors1conf-admin -p qweasd --host indexer-mongocfg1:27017 --quiet --eval "rs.status().ok"
+  status=$?
+  echo "status, $status"
+  while [[ status -ne 0 ]] ; do
       sleep 2
       let COUNTER+=2
-      echo "Waiting for mongo to initialize... ($COUNTER seconds so far)"
-      mongo -u mongors1conf-admin -p qweasd --host indexer-mongocfg1:27017 --eval 'rs.status().ok'
-      response=$?
+      echo "Waiting for server to initialize... $COUNTER"
+      mongo -u mongors1conf-admin -p qweasd --host indexer-mongocfg1:27017 --quiet --eval "rs.status().ok"
+      status=$?
+      echo "status, $status"
   done
 }
 retry_until() {
@@ -20,7 +20,7 @@ retry_until() {
   while [[ $? -ne 0 ]] ; do
       sleep 2
       let COUNTER+=2
-      echo "Waiting for mongo to initialize... ($COUNTER seconds so far)"
+      echo "Waiting for server to initialize... $COUNTER"
       grep -q 'waiting for connections on port' /var/log/mongodb.log
   done
 }
@@ -35,7 +35,7 @@ then
   echo "starting mongodb"
   mongod --keyFile /home/keyfile --configsvr --replSet mongors1conf --dbpath /data/db --port 27017  --bind_ip 0.0.0.0 2>&1 | tee -a /var/log/mongodb.log 1>&2 &
   retry_until
-  mongo --eval 'rs.initiate({_id:"mongors1conf",configsvr:true,members:[{_id:0,host:"indexer-mongocfg1-0"}]})'
+  mongo --eval 'rs.initiate({_id:"mongors1conf",configsvr:true,members:[{_id:0,host:"indexer-mongocfg1-0:27017"}]})'
   mongo --eval 'db.getSiblingDB("admin").createUser({user:"mongors1conf-admin",pwd: "qweasd",roles:[{role:"userAdminAnyDatabase",db:"admin" },{role:"clusterAdmin",db:"admin"}],mechanisms:["SCRAM-SHA-256"]})'
   while true; do
     :
@@ -45,7 +45,7 @@ then
   echo "starting mongodb"
   mongod --keyFile /home/keyfile --shardsvr --replSet mongors1 --dbpath /data/db --port 27017 --bind_ip 0.0.0.0 2>&1 | tee -a /var/log/mongodb.log 1>&2 &
   retry_until
-  mongo --eval 'rs.initiate({_id:"mongors1",members:[{_id:0,host:"indexer-mongors1n1-0"}]})'
+  mongo --eval 'rs.initiate({_id:"mongors1",members:[{_id:0,host:"indexer-mongors1n1-0:27017"}]})'
   mongo --eval 'db.getSiblingDB("admin").createUser({user:"mongors1-admin",pwd: "qweasd",roles:[{role:"userAdminAnyDatabase",db:"admin" },{role:"clusterAdmin",db:"admin"}],mechanisms:["SCRAM-SHA-256"]})'
   while true; do
     :
